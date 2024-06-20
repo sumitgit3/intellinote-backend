@@ -3,7 +3,12 @@ Use the express.Router class to create modular, mountable route handlers. A Rout
 import express from 'express'
 import User from '../models/Users.js'
 import { body, validationResult } from 'express-validator';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv';
 
+// Load environment variables
+dotenv.config();
 
 const router = express.Router();
 //create a User using POST "api/auth/createuser": doesn't require login
@@ -24,13 +29,24 @@ router.post('/createuser', [
             if (userExist) {
                 return res.status(400).send("Please try a different email. This email already exist");
             }
+            //hash password using bcryptjs
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(req.body.password,salt);
             //User.create return a promise, we are waiting for promise to be resolved
             const user = await User.create({
                 name,
                 email,
-                password: password
+                password: hash
             });
-            res.json(user);
+            //create a JWT Token
+            const signatureKey = process.env.AUTH_SECRET_KEY;
+            const authToken = jwt.sign(
+                { id: user._id }, 
+                signatureKey,
+                { expiresIn: '1h' } //token expire in 1h
+            );
+
+            res.json({authToken});
         }
         catch (err) {
             console.log(err.message);
