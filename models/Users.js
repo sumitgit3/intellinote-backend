@@ -24,8 +24,5 @@ const UserSchema = new mongoose.Schema({
 // Create a Mongoose model for the User collection
 const User = mongoose.model('User', UserSchema);
 
-// Explicitly create indexes as defined in the schema
-User.createIndexes();
-
 // Export the model
 export default User;
