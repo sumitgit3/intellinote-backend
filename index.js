@@ -9,7 +9,7 @@ connectToMongo();
 
 const app = express()
 const port = 5000
-//use req--use middleware to make it happen
+//use req-->use middleware to make it happen
 app.use(express.json());
 //available routes
 app.use('/api/auth',authRouter);
