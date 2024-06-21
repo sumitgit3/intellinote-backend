@@ -6,12 +6,13 @@ import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
+import fetchUser from '../Middleware/fetchuser.js';
 
 // Load environment variables
 dotenv.config();
-
 const router = express.Router();
-//create a User using POST "api/auth/createuser": doesn't require login
+
+//ROUTE 1:Create a User using POST "api/auth/createuser": doesn't require login
 router.post('/createuser', [
     body('name', "Enter a valid Name").isLength({ min: 5, max: 20 }),
     body('email', "Enter a valid Email").isEmail(),
@@ -40,8 +41,9 @@ router.post('/createuser', [
             });
             //create a JWT Token
             const signatureKey = process.env.AUTH_SECRET_KEY;
+            const payload = { id: user._id };
             const authToken = jwt.sign(
-                { id: user._id }, 
+                payload, 
                 signatureKey,
                 { expiresIn: '1h' } //token expire in 1h
             );
@@ -49,11 +51,61 @@ router.post('/createuser', [
             res.json({authToken});
         }
         catch (err) {
-            console.log(err.message);
-            res.status(500).send("Some error occured");
+            res.status(500).send("Internal Server Error");
         }
     }
 
 });
+//ROUTE 2:AUTHENTICATE a User using POST "api/auth/login": doesn't require login
+const loginValidator = [
+    body('email','Please Enter a valid Email').isEmail(),
+    body('password','Please enter a password').exists()
+];
+router.post('/login',loginValidator, async (req,res)=>{
+    const errors = validationResult(req);
+    //check for error in validation
+    if (!errors.isEmpty()) {  
+       return res.status(400).json({ errors: errors.array() });
+    }
+    try {
+        const {email,password} = req.body;
+        //check if email is in database
+        const user = await User.findOne({ "email": email });
+        if (!user) {
+            return res.status(400).send("Please try again with correct credentials ");
+        }
+        //check if password is correct
+        const isPasswordValid =await bcrypt.compare(password,user.password);
+        if(!isPasswordValid){
+            return res.status(400).send("Please try again with correct credentials ");
+        }
+         //create a JWT Token
+         const signatureKey = process.env.AUTH_SECRET_KEY;
+         const payload = { id: user._id };
+         const authToken = jwt.sign(
+             payload, 
+             signatureKey,
+             { expiresIn: '1h' } //token expire in 1h
+         );
+         res.json({authToken});
 
+    }
+    catch(err){
+        res.status(500).send("Internal Server Error");
+    }
+
+})
+//ROUTE 3:Get loggedin user details using POST "api/auth/getuser": Login required
+//using a middleware to get user id from auth token
+router.post('/getuser',fetchUser, async (req,res)=>{
+    try{
+        //get user Data from database using id
+        const user = await User.findById(req.id,{password:0,_id:0,__v:0});
+        res.send(user);
+    }
+    catch(err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
+});
 export default router;
