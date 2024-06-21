@@ -2,6 +2,11 @@
 import  mongoose  from "mongoose";
 
 const NotesSchema = new mongoose.Schema({
+   //contain the id of user whose note is this
+   user :{
+      type : mongoose.Schema.Types.ObjectId,
+      ref : 'User'
+   },
    title:{
     type:String,
     required:true
@@ -15,8 +20,8 @@ const NotesSchema = new mongoose.Schema({
     default: "general"
    },
    date: {
-    type: date,
-    default : Date.now,
+    type: Date,
+    default : Date.now
    }
   });
 
