@@ -84,8 +84,8 @@ router.post('/login',loginValidator, async (req,res)=>{
          const payload = { id: user._id };
          const authToken = jwt.sign(
              payload, 
-             signatureKey,
-             { expiresIn: '1h' } //token expire in 1h
+             signatureKey
+              // can add token expire  { expiresIn: '1h' }
          );
          res.json({authToken});
 
