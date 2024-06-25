@@ -72,12 +72,12 @@ router.post('/login',loginValidator, async (req,res)=>{
         //check if email is in database
         const user = await User.findOne({ "email": email });
         if (!user) {
-            return res.status(400).send("Please try again with correct credentials ");
+            return res.status(401).send("Please try again with correct credentials ");
         }
         //check if password is correct
         const isPasswordValid =await bcrypt.compare(password,user.password);
         if(!isPasswordValid){
-            return res.status(400).send("Please try again with correct credentials ");
+            return res.status(401).send("Please try again with correct credentials ");
         }
          //create a JWT Token
          const signatureKey = process.env.AUTH_SECRET_KEY;
