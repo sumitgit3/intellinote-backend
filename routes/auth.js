@@ -65,7 +65,7 @@ router.post('/login',loginValidator, async (req,res)=>{
     const errors = validationResult(req);
     //check for error in validation
     if (!errors.isEmpty()) {  
-       return res.status(400).json({ errors: errors.array() });
+       return res.status(400).json({errors: errors.array() });
     }
     try {
         const {email,password} = req.body;
@@ -87,7 +87,7 @@ router.post('/login',loginValidator, async (req,res)=>{
              signatureKey
               // can add token expire  { expiresIn: '1h' }
          );
-         res.json({authToken});
+         res.status(200).json({authToken});
 
     }
     catch(err){
