@@ -20,7 +20,8 @@ router.post('/createuser', [
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        res.status(400).json({ errors: errors.array() });
+        const errorMessage = errors.array()[0].msg;
+        res.status(400).send(errorMessage);
     }
     else {
         try {
@@ -65,7 +66,8 @@ router.post('/login',loginValidator, async (req,res)=>{
     const errors = validationResult(req);
     //check for error in validation
     if (!errors.isEmpty()) {  
-       return res.status(400).json({errors: errors.array() });
+        const errorMessage = errors.array()[0].msg;
+        return res.status(400).send(errorMessage);
     }
     try {
         const {email,password} = req.body;

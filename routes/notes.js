@@ -8,64 +8,66 @@ import { body, validationResult } from 'express-validator';
 const router = express.Router();
 
 //ROUTE 1:Fetch all user notes using GET containing token "api/notes/fetchallnotes": Login required
-router.get('/fetchallnotes',fetchUser, async (req,res)=>{
+router.get('/fetchallnotes', fetchUser, async (req, res) => {
     try {
-        const allNotes =await Notes.find({user:req.id});
+        const allNotes = await Notes.find({ user: req.id });
         res.send(allNotes);
-    } 
+    }
     catch (err) {
         res.send("Internal Server Error");
     }
 });
 //ROUTE 2:Add a note using POST containing token "api/notes/addnote": Login required
- const validateNote = [
-    body('title','Please Enter a valid title').isLength({min:3}),
-    body('description','Description must be atleast 5 characters').isLength({min:5})
+const validateNote = [
+    body('title', 'Please Enter a valid title').isLength({ min: 3 }),
+    body('description', 'Description must be atleast 5 characters').isLength({ min: 5 })
 ];
-router.post('/addnote',fetchUser,validateNote,async (req,res)=>{
+router.post('/addnote', fetchUser, validateNote, async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-       return res.status(400).json({ errors: errors.array() });
+        const errorMessage = errors.array()[0].msg;
+        return res.status(400).send(errorMessage);
     }
     try {
-        const {title,description,tag} = req.body;
+        const { title, description, tag } = req.body;
         const note = await Notes.create({
             title,
             description,
             tag,
-            user:req.id
+            user: req.id
         });
         res.send(note);
-    } 
+    }
     catch (err) {
         res.status(500).send("Internal Server Error");
     }
 });
 //ROUTE 3:Modify a note using PUT containing authtoken "api/notes/updatenote": Login required
-router.put('/updatenote/:id',fetchUser,validateNote,async (req,res)=>{
+router.put('/updatenote/:id', fetchUser, validateNote, async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-       return res.status(400).json({ errors: errors.array() });
+        const errorMessage = errors.array()[0].msg;
+        return res.status(400).send(errorMessage);
     }
     try {
-        const {title,description,tag} = req.body;
+        const { title, description, tag } = req.body;
         const newNote = {};
-        if(title) newNote.title = title;
-        if(description) newNote.description = description;
-        if(tag) newNote.tag = tag;
+        if (title) newNote.title = title;
+        if (description) newNote.description = description;
+        if (tag) newNote.tag = tag;
 
         //check if updating their own note
         let note = await Notes.findById(req.params.id);
-        if(note && (note.user.toString() !== req.id)){
-           return res.status(401).send("Not Allowed");
+        if (note && (note.user.toString() !== req.id)) {
+            return res.status(401).send("Not Allowed");
         }
         //Give response if note exists or not
-        if(!note) return res.status(404).send("Not found");
+        if (!note) return res.status(404).send("Not found");
 
-        note = await Notes.findByIdAndUpdate(req.params.id,{$set: newNote},{new : true});
+        note = await Notes.findByIdAndUpdate(req.params.id, { $set: newNote }, { new: true });
         res.json(note);
-        
-    } 
+
+    }
     catch (err) {
         console.log(err);
         res.status(500).send("Internal Server Error");
@@ -73,20 +75,20 @@ router.put('/updatenote/:id',fetchUser,validateNote,async (req,res)=>{
 });
 
 //ROUTE 4:Delete a note using DELETE containing authtoken "api/notes/updatenote": Login required
-router.delete('/deletenote/:id',fetchUser,validateNote,async (req,res)=>{
+router.delete('/deletenote/:id', fetchUser, validateNote, async (req, res) => {
     try {
         //check if deleting their own note
         let note = await Notes.findById(req.params.id);
-        if(note && (note.user.toString() !== req.id)){
-           return res.status(401).send("Not Allowed");
+        if (note && (note.user.toString() !== req.id)) {
+            return res.status(401).send("Not Allowed");
         }
         //Give response if note exists or not
-        if(!note) return res.status(404).send("Not found");
+        if (!note) return res.status(404).send("Not found");
 
         note = await Notes.findByIdAndDelete(req.params.id);
-        res.json({"Success":"Note Successfully deleted",note});
-        
-    } 
+        res.json({ "Success": "Note Successfully deleted", note });
+
+    }
     catch (err) {
         console.log(err);
         res.status(500).send("Internal Server Error");
